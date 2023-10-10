@@ -1384,6 +1384,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bcryptjs@npm:^2.4.4":
+  version: 2.4.4
+  resolution: "@types/bcryptjs@npm:2.4.4"
+  checksum: 7c8a50e0dec58bd391bf65b41c1422ac61c5f71d5adaa9a002c10368b64f4b1a9a0628f29b43dfd1fa0353b671b2cb1c11e27c5658877527ebad6d3c3f50e2b2
+  languageName: node
+  linkType: hard
+
 "@types/cookie@npm:^0.4.1":
   version: 0.4.1
   resolution: "@types/cookie@npm:0.4.1"
@@ -2106,6 +2113,13 @@ __metadata:
   dependencies:
     safe-buffer: 5.1.2
   checksum: 3419b805d5dfc518f3a05dcf42aa53aa9ce820e50b6df5097f9e186322e1bc733c36722b624802cd37e791035aa73b828ed814d8362333d42d7f5cd04d7a5e48
+  languageName: node
+  linkType: hard
+
+"bcryptjs@npm:^2.4.3":
+  version: 2.4.3
+  resolution: "bcryptjs@npm:2.4.3"
+  checksum: 0e80ed852a41f5dfb1853f53ee14a7390b0ef263ce05dba6e2ef3cd919dfad025a7c21ebcfe5bc7fa04b100990edf90c7a877ff7fe623d3e479753253131b629
   languageName: node
   linkType: hard
 
@@ -7178,9 +7192,11 @@ __metadata:
     "@remix-run/node": ^2.0.1
     "@remix-run/react": ^2.0.1
     "@remix-run/serve": ^2.0.1
+    "@types/bcryptjs": ^2.4.4
     "@types/react": ^18.2.20
     "@types/react-dom": ^18.2.7
     autoprefixer: ^10.4.16
+    bcryptjs: ^2.4.3
     concurrently: ^8.2.1
     eslint: ^8.38.0
     isbot: ^3.6.8
