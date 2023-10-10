@@ -1,6 +1,5 @@
-import bcrypt from 'bcryptjs';
 import { db } from '~/db.server';
-import type { UserSignupForm } from '~/types/auth.server';
+import { passwordService } from '.';
 
 export async function existsByEmail(email: string) {
   const exists = await db.user.count({
@@ -9,8 +8,19 @@ export async function existsByEmail(email: string) {
   return !!exists;
 }
 
-export async function create(userSignup: UserSignupForm) {
-  const passwordHash = await bcrypt.hash(userSignup.password, 10);
+export async function findByEmail(email: string) {
+  return db.user.findUnique({
+    where: { email },
+  });
+}
+
+export async function create(userSignup: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}) {
+  const passwordHash = await passwordService.generateHash(userSignup.password);
   const newUser = await db.user.create({
     data: {
       email: userSignup.email,

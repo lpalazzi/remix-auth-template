@@ -1,46 +1,62 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  ActionFunction,
-  LoaderFunction,
-  json,
-  redirect,
-} from '@remix-run/node';
+import { ActionFunction, LoaderFunction, redirect } from '@remix-run/node';
 import { useActionData } from '@remix-run/react';
-import { FormField } from '~/components/form-field';
-import { Layout } from '~/components/layout';
+
+import { authService, passwordService, userService } from '~/services';
+import { BadRequestError } from '~/utils/errors.server';
 import {
   validateEmail,
   validateName,
   validatePassword,
 } from '~/utils/validation.server';
-import { authService } from '~/services';
+
+import { FormField } from '~/components/form-field';
+import { Layout } from '~/components/layout';
+
+type LoginActionData = {
+  formType?: 'login' | 'signup';
+  fields?: {
+    email?: string;
+    password?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  formError?: string;
+  fieldErrors?: {
+    email?: string;
+    password?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+};
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return (await authService.getUser(request)) ? redirect('/') : null;
+  return (await authService.getLoggedInUser(request)) ? redirect('/') : null;
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
-  const action = form.get('_action');
+  const formType = form.get('_formType');
   const email = form.get('email');
   const password = form.get('password');
   const firstName = form.get('firstName') || '';
   const lastName = form.get('lastName') || '';
 
   if (
-    typeof action !== 'string' ||
+    typeof formType !== 'string' ||
+    (formType !== 'login' && formType !== 'signup') ||
     typeof email !== 'string' ||
     typeof password !== 'string' ||
     typeof firstName !== 'string' ||
     typeof lastName !== 'string'
   ) {
-    return json({ error: `Invalid Form Data`, form: action }, { status: 400 });
+    return BadRequestError<LoginActionData>({ formError: 'Invalid form data' });
   }
 
-  const errors = {
+  const fieldErrors = {
     email: validateEmail(email),
     password: validatePassword(password),
-    ...(action === 'signup'
+    ...(formType === 'signup'
       ? {
           firstName: validateName(firstName),
           lastName: validateName(lastName),
@@ -48,40 +64,66 @@ export const action: ActionFunction = async ({ request }) => {
       : {}),
   };
 
-  if (Object.values(errors).some(Boolean)) {
-    return json(
-      {
-        errors,
-        fields: { email, password, firstName, lastName },
-        form: action,
-      },
-      { status: 400 }
-    );
+  if (Object.values(fieldErrors).some(Boolean)) {
+    return BadRequestError<LoginActionData>({
+      formType,
+      fields: { email, password, firstName, lastName },
+      fieldErrors,
+    });
   }
 
-  switch (action) {
+  switch (formType) {
     case 'login': {
-      return await authService.login(email, password);
+      const user = await userService.findByEmail(email);
+      const verified =
+        user &&
+        (await passwordService.verifyPasswordByUserId(user.id, password));
+      if (!verified) {
+        return BadRequestError<LoginActionData>({
+          formType,
+          fields: { email, password },
+          formError: 'Incorrect login credentials',
+        });
+      }
+      return authService.createUserSession(user.id, '/');
     }
     case 'signup': {
-      return await authService.signup({
+      if (await userService.existsByEmail(email)) {
+        return BadRequestError<LoginActionData>({
+          formType,
+          fields: { email, password, firstName, lastName },
+          formError: 'User already exists with that email',
+        });
+      }
+      const newUser = await userService.create({
         email,
         password,
         firstName,
         lastName,
       });
+      if (!newUser) {
+        return BadRequestError<LoginActionData>({
+          formType,
+          fields: { email, password, firstName, lastName },
+          formError:
+            'Something went wrong creating your account. Please try again.',
+        });
+      }
+      return authService.createUserSession(newUser.id, '/');
     }
     default: {
-      return json({ error: `Invalid Form Data` }, { status: 400 });
+      return BadRequestError<LoginActionData>({
+        formError: `Invalid Form Data`,
+      });
     }
   }
 };
 
 export default function Login() {
-  const actionData: any = useActionData();
+  const actionData = useActionData<LoginActionData>();
   const firstLoad = useRef(true);
-  const [formAction, setFormAction] = useState<'login' | 'signup'>(
-    actionData?.form || 'login'
+  const [formType, setFormType] = useState<'login' | 'signup'>(
+    actionData?.formType || 'login'
   );
   const [formData, setFormData] = useState({
     email: actionData?.fields?.email || '',
@@ -89,8 +131,8 @@ export default function Login() {
     firstName: actionData?.fields?.firstName || '',
     lastName: actionData?.fields?.lastName || '',
   });
-  const [fieldErrors, setFieldErrors] = useState(actionData?.errors || {});
-  const [formError, setFormError] = useState(actionData?.error || '');
+  const [fieldErrors, setFieldErrors] = useState(actionData?.fieldErrors || {});
+  const [formError, setFormError] = useState(actionData?.formError || '');
 
   useEffect(() => {
     if (!firstLoad.current) {
@@ -104,7 +146,7 @@ export default function Login() {
       setFieldErrors(newState);
       setFormError('');
     }
-  }, [formAction]);
+  }, [formType]);
 
   useEffect(() => {
     if (!firstLoad.current) {
@@ -133,7 +175,7 @@ export default function Login() {
           remix-auth-template
         </h1>
         <p className='font-semibold text-slate-300'>
-          {formAction === 'login'
+          {formType === 'login'
             ? 'Sign in to your account'
             : 'Create a new account'}
         </p>
@@ -159,7 +201,7 @@ export default function Login() {
             error={fieldErrors?.password}
           />
 
-          {formAction === 'signup' && (
+          {formType === 'signup' && (
             <>
               <FormField
                 htmlFor='firstName'
@@ -181,26 +223,26 @@ export default function Login() {
           <div className='w-full text-center'>
             <button
               type='submit'
-              name='_action'
-              value={formAction}
+              name='_formType'
+              value={formType}
               className='rounded-xl mt-2 bg-yellow-300 px-3 py-2 text-blue-600 font-semibold transition duration-300 ease-in-out hover:bg-yellow-400 hover:-translate-y-1'
             >
-              {formAction === 'login' ? 'Sign in' : 'Sign up'}
+              {formType === 'login' ? 'Sign in' : 'Sign up'}
             </button>
           </div>
         </form>
         <div className='flex flex-row'>
           <p className='font-semibold text-slate-300'>
-            {formAction === 'login'
+            {formType === 'login'
               ? "Don't have an account?"
               : 'Already have an account?'}{' '}
             <span
               onClick={() =>
-                setFormAction(formAction === 'login' ? 'signup' : 'login')
+                setFormType(formType === 'login' ? 'signup' : 'login')
               }
               className='font-extrabold text-yellow-300 underline cursor-pointer'
             >
-              {formAction === 'login' ? 'Sign up' : 'Sign in'}
+              {formType === 'login' ? 'Sign up' : 'Sign in'}
             </span>
           </p>
         </div>

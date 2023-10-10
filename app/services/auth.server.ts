@@ -1,8 +1,5 @@
-import { redirect, json, createCookieSessionStorage } from '@remix-run/node';
-import bcrypt from 'bcryptjs';
+import { redirect, createCookieSessionStorage } from '@remix-run/node';
 import { db } from '~/db.server';
-import { userService } from '~/services';
-import type { UserSignupForm } from '~/types/auth.server';
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -21,7 +18,11 @@ const storage = createCookieSessionStorage({
   },
 });
 
-async function createUserSession(userId: string, redirectTo: string) {
+async function getUserSession(request: Request) {
+  return storage.getSession(request.headers.get('Cookie'));
+}
+
+export async function createUserSession(userId: string, redirectTo: string) {
   const session = await storage.getSession();
   session.set('userId', userId);
   return redirect(redirectTo, {
@@ -31,11 +32,7 @@ async function createUserSession(userId: string, redirectTo: string) {
   });
 }
 
-async function getUserSession(request: Request) {
-  return storage.getSession(request.headers.get('Cookie'));
-}
-
-export async function getUserId(request: Request) {
+export async function getLoggedInUserId(request: Request) {
   const session = await getUserSession(request);
   const userId = session.get('userId');
   if (!userId || typeof userId !== 'string') return null;
@@ -46,7 +43,7 @@ export async function requireUserId(
   request: Request,
   redirectTo: string = new URL(request.url).pathname
 ) {
-  const userId = await getUserId(request);
+  const userId = await getLoggedInUserId(request);
   if (!userId) {
     const searchParams = new URLSearchParams([['redirectTo', redirectTo]]);
     throw redirect(`/login?${searchParams}`);
@@ -54,8 +51,8 @@ export async function requireUserId(
   return userId;
 }
 
-export async function getUser(request: Request) {
-  const userId = await getUserId(request);
+export async function getLoggedInUser(request: Request) {
+  const userId = await getLoggedInUserId(request);
   if (!userId) {
     return null;
   }
@@ -69,50 +66,6 @@ export async function getUser(request: Request) {
   } catch {
     throw logout(request);
   }
-}
-
-export async function signup(userSignup: UserSignupForm) {
-  if (await userService.existsByEmail(userSignup.email)) {
-    return json(
-      { error: 'User already exists with that email' },
-      { status: 400 }
-    );
-  }
-
-  const newUser = await userService.create(userSignup);
-  if (!newUser) {
-    return json(
-      {
-        error: 'Something went wrong creating your account. Please try again.',
-        fields: { email: userSignup.email },
-      },
-      { status: 400 }
-    );
-  }
-
-  return createUserSession(newUser.id, '/');
-}
-
-export async function login(email: string, password: string) {
-  const user = await db.user.findUnique({
-    where: { email },
-    include: { password: true },
-  });
-
-  if (
-    !user ||
-    !user.password ||
-    !(await bcrypt.compare(password, user.password.hash))
-  ) {
-    return json(
-      {
-        error: 'Incorrect login',
-      },
-      { status: 400 }
-    );
-  }
-
-  return createUserSession(user.id, '/');
 }
 
 export async function logout(request: Request) {
