@@ -1,5 +1,6 @@
 import { redirect, createCookieSessionStorage } from '@remix-run/node';
 import { db } from '~/db.server';
+import { UserWithProfile } from '~/types';
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -39,16 +40,22 @@ export async function getLoggedInUserId(request: Request) {
   return userId;
 }
 
-export async function requireUserId(
+export async function requireLoggedInUser(
   request: Request,
   redirectTo: string = new URL(request.url).pathname
 ) {
   const userId = await getLoggedInUserId(request);
-  if (!userId) {
+  const user =
+    !!userId &&
+    (await db.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    }));
+  if (!userId || !user) {
     const searchParams = new URLSearchParams([['redirectTo', redirectTo]]);
     throw redirect(`/login?${searchParams}`);
   }
-  return userId;
+  return user as UserWithProfile;
 }
 
 export async function getLoggedInUser(request: Request) {
@@ -56,16 +63,11 @@ export async function getLoggedInUser(request: Request) {
   if (!userId) {
     return null;
   }
-
-  try {
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, profile: true },
-    });
-    return user;
-  } catch {
-    throw logout(request);
-  }
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: { profile: true },
+  });
+  return user as UserWithProfile;
 }
 
 export async function logout(request: Request) {

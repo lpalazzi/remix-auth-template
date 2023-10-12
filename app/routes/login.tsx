@@ -31,7 +31,11 @@ type LoginActionData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  return (await authService.getLoggedInUser(request)) ? redirect('/') : null;
+  const userId = await authService.getLoggedInUserId(request);
+  if (userId) {
+    return redirect('/');
+  }
+  return null;
 };
 
 export const action: ActionFunction = async ({ request }) => {

@@ -1,38 +1,50 @@
-# Welcome to Remix!
+# remix-auth-template
 
-- [Remix Docs](https://remix.run/docs)
+Starter code for projects that require user authentication (email+password)
 
-## Development
+## Stack
+
+- Full-stack web development with [Remix](https://remix.run)
+- Styling with [TailwindCSS](https://tailwindcss.com/)
+- Database with [PostgreSQL](https://www.postgresql.org/) & [Prisma](https://www.prisma.io/)
+
+## Requirements
+
+- Node.js version 18 or higher
+- A PostgreSQL database and its connection string, either hosted locally for development or hosted for production
+
+## Running the app
+
+### Before you build and run
+
+1. Copy `.example.env` to a new file named `.env` at the root of the project, and fill in the values as described.
+
+2. Run `yarn install` to install dependencies.
+
+3. Run the required database migrations:
+   - In development: `npx prisma migrate dev`
+   - In production: `npx prisma migrate deploy`
+
+### Local development
 
 From your terminal:
 
 ```sh
-npm run dev
+yarn dev
 ```
 
-This starts your app in development mode, rebuilding assets on file changes.
+This starts the app in development mode, rebuilding assets on file changes.
 
-## Deployment
+### Build and run for Production
 
 First, build your app for production:
 
 ```sh
-npm run build
+yarn build
 ```
 
 Then run the app in production mode:
 
 ```sh
-npm start
+yarn start
 ```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `remix build`
-
-- `build/`
-- `public/build/`
