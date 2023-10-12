@@ -18,7 +18,9 @@ export default function Home() {
   return (
     <Layout>
       <div className='h-full justify-center items-center flex flex-col gap-y-4'>
-        <h1 className='text-5xl font-extrabold text-yellow-300'>Home Page</h1>
+        <h1 className='text-5xl font-extrabold text-yellow-300'>
+          remix-auth-template
+        </h1>
         <p className='font-semibold text-slate-300'>
           Welcome, {user.profile?.firstName + ' ' + user.profile?.lastName}!
         </p>
