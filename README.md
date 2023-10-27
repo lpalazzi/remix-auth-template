@@ -35,9 +35,17 @@ yarn dev
 
 This starts the app in development mode, rebuilding assets on file changes.
 
+If you make changes to the database schema, you will need to run `npx prisma migrate dev` again before restarting the server.
+
 ### Build and run for Production
 
-First, build your app for production:
+If changes were made to the database schema, first run:
+
+```sh
+npx prisma migrate deploy
+```
+
+Next, build your app for production:
 
 ```sh
 yarn build
