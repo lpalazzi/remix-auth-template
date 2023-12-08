@@ -12,29 +12,29 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@prisma/client": "5.4.1",
-    "@remix-run/css-bundle": "^2.0.1",
-    "@remix-run/node": "^2.0.1",
-    "@remix-run/react": "^2.0.1",
-    "@remix-run/serve": "^2.0.1",
+    "@prisma/client": "5.7.0",
+    "@remix-run/css-bundle": "^2.3.1",
+    "@remix-run/node": "^2.3.1",
+    "@remix-run/react": "^2.3.1",
+    "@remix-run/serve": "^2.3.1",
     "bcryptjs": "^2.4.3",
-    "isbot": "^3.6.8",
+    "isbot": "^3.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.0.1",
-    "@remix-run/eslint-config": "^2.0.1",
-    "@types/bcryptjs": "^2.4.4",
-    "@types/react": "^18.2.20",
-    "@types/react-dom": "^18.2.7",
+    "@remix-run/dev": "^2.3.1",
+    "@remix-run/eslint-config": "^2.3.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.1",
-    "eslint": "^8.38.0",
-    "postcss": "^8.4.31",
-    "prisma": "5.4.1",
-    "tailwindcss": "^3.3.3",
-    "typescript": "^5.1.6"
+    "concurrently": "^8.2.2",
+    "eslint": "^8.55.0",
+    "postcss": "^8.4.32",
+    "prisma": "5.7.0",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0"
